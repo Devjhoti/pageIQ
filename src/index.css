@@ -1,0 +1,61 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  --bg-primary: #080C10;
+  --bg-secondary: #0D1117;
+  --bg-tertiary: #161B22;
+  --border: #21262D;
+  --border-accent: #30363D;
+  --text-primary: #E6EDF3;
+  --text-secondary: #8B949E;
+  --text-muted: #484F58;
+  --accent: #00D4AA;
+  --accent-glow: rgba(0,212,170,0.15);
+  --accent-secondary: #1F6FEB;
+  --danger: #F85149;
+  --warning: #D29922;
+  --success: #3FB950;
+}
+
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+body {
+  font-family: 'DM Sans', sans-serif;
+  background-color: var(--bg-primary);
+  color: var(--text-secondary);
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+#root {
+  min-height: 100vh;
+}
+
+@keyframes gradient-shift {
+  0% { transform: translate(0, 0) scale(1); }
+  25% { transform: translate(10%, -5%) scale(1.05); }
+  50% { transform: translate(-5%, 10%) scale(1.1); }
+  75% { transform: translate(8%, 5%) scale(0.95); }
+  100% { transform: translate(0, 0) scale(1); }
+}
+
+@keyframes float-dot {
+  0%, 100% { transform: translateY(0) opacity(0.3); }
+  50% { transform: translateY(-20px) opacity(0.6); }
+}
+
+@keyframes shimmer {
+  0% { background-position: -200% 0; }
+  100% { background-position: 200% 0; }
+}
+
+@keyframes pulse-glow {
+  0%, 100% { box-shadow: 0 0 20px var(--accent-glow); }
+  50% { box-shadow: 0 0 40px var(--accent-glow), 0 0 60px rgba(0,212,170,0.1); }
+}

@@ -73,7 +73,7 @@ export default function NewAnalysis() {
   async function handleConnectFacebook() {
     setConnectingFb(true)
     try {
-      const { data } = await api.get('/api/facebook/oauth-url', {
+      const { data } = await api.get('/facebook/oauth-url', {
         params: { state: 'pageiq_connect' }
       })
       window.location.href = data.url
@@ -108,31 +108,31 @@ export default function NewAnalysis() {
         analysisType,
         fbAccessToken || null
       )
-      setAnalysisId(analysis.id)
+      const id = analysis.id
+      setAnalysisId(id)
+
+      for (let i = 0; i < loadingStages.length; i++) {
+        setCurrentStage(i)
+        const start = Date.now()
+        const duration = loadingStages[i].duration
+        await new Promise((resolve) => {
+          function animate() {
+            const elapsed = Date.now() - start
+            const progress = Math.min(elapsed / duration, 1)
+            setStageProgress(progress)
+            if (progress < 1) requestAnimationFrame(animate)
+            else resolve()
+          }
+          requestAnimationFrame(animate)
+        })
+      }
+
+      if (id) {
+        navigate('/dashboard/reports')
+      }
     } catch (err) {
       console.error('Analysis failed:', err)
       setAnalyzing(false)
-      return
-    }
-
-    for (let i = 0; i < loadingStages.length; i++) {
-      setCurrentStage(i)
-      const start = Date.now()
-      const duration = loadingStages[i].duration
-      await new Promise((resolve) => {
-        function animate() {
-          const elapsed = Date.now() - start
-          const progress = Math.min(elapsed / duration, 1)
-          setStageProgress(progress)
-          if (progress < 1) requestAnimationFrame(animate)
-          else resolve()
-        }
-        requestAnimationFrame(animate)
-      })
-    }
-
-    if (analysisId) {
-      navigate('/dashboard/reports')
     }
   }
 

@@ -1,5 +1,5 @@
 import { NavLink } from 'react-router-dom'
-import { LayoutDashboard, FileSpreadsheet, Plus, Settings, LogOut } from 'lucide-react'
+import { LayoutDashboard, FileSpreadsheet, Plus, Settings, LogOut, Target, MessageSquare } from 'lucide-react'
 import { cn } from '../../lib/utils'
 import { useAuth } from '../../hooks/useAuth'
 import logoSrc from '../../assets/logo.svg'
@@ -8,6 +8,8 @@ const navItems = [
   { to: '/dashboard', icon: LayoutDashboard, label: 'Dashboard' },
   { to: '/dashboard/new', icon: Plus, label: 'New Analysis' },
   { to: '/dashboard/reports', icon: FileSpreadsheet, label: 'Reports' },
+  { to: '/dashboard/competitors', icon: Target, label: 'Competitor Intel' },
+  { to: '/dashboard/comments', icon: MessageSquare, label: 'Comment Intelligence' },
   { to: '/dashboard/settings', icon: Settings, label: 'Settings' },
 ]
 

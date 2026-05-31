@@ -1,5 +1,5 @@
 import { useLocation, NavLink } from 'react-router-dom'
-import { LayoutDashboard, FileSpreadsheet, Plus, Settings } from 'lucide-react'
+import { LayoutDashboard, FileSpreadsheet, Plus, Settings, Target, MessageSquare } from 'lucide-react'
 import { cn } from '../../lib/utils'
 import { useAuth } from '../../hooks/useAuth'
 import Sidebar from './Sidebar'
@@ -9,6 +9,8 @@ const bottomNavItems = [
   { to: '/dashboard', icon: LayoutDashboard, label: 'Home' },
   { to: '/dashboard/new', icon: Plus, label: 'New' },
   { to: '/dashboard/reports', icon: FileSpreadsheet, label: 'Reports' },
+  { to: '/dashboard/competitors', icon: Target, label: 'Intel' },
+  { to: '/dashboard/comments', icon: MessageSquare, label: 'Comments' },
   { to: '/dashboard/settings', icon: Settings, label: 'Settings' },
 ]
 

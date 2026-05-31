@@ -246,3 +246,251 @@ export function mockDeleteAccount() {
     }, 800)
   })
 }
+
+// --- COMPETITOR INTELLIGENCE MOCK DATA ---
+
+export const mockCompetitors = [
+  {
+    id: 'comp_001',
+    pageUrl: 'https://facebook.com/WaltonBD',
+    pageName: 'Walton Bangladesh',
+    category: 'Electronics',
+    followers: 2400000,
+    addedAt: '2024-01-10T10:00:00Z',
+    lastAnalyzed: '2024-01-15T14:30:00Z',
+    status: 'analyzed',
+    overallSentiment: 62,
+    threatLevel: 'High',
+  },
+  {
+    id: 'comp_002',
+    pageUrl: 'https://facebook.com/SingerBangladesh',
+    pageName: 'Singer Bangladesh',
+    category: 'Electronics',
+    followers: 1800000,
+    addedAt: '2024-01-12T09:00:00Z',
+    lastAnalyzed: '2024-01-15T14:45:00Z',
+    status: 'analyzed',
+    overallSentiment: 55,
+    threatLevel: 'Medium',
+  },
+  {
+    id: 'comp_003',
+    pageUrl: 'https://facebook.com/MarcelBD',
+    pageName: 'Marcel Bangladesh',
+    category: 'Electronics',
+    followers: 950000,
+    addedAt: '2024-01-14T11:00:00Z',
+    lastAnalyzed: null,
+    status: 'pending',
+    overallSentiment: null,
+    threatLevel: 'Low',
+  },
+]
+
+export const mockCompetitorReport = {
+  id: 'comp_001',
+  pageName: 'Walton Bangladesh',
+  pageUrl: 'https://facebook.com/WaltonBD',
+  followers: 2400000,
+  followersGrowthPercent: 12.4,
+  avgPostsPerWeek: 8,
+  avgEngagementRate: '2.1%',
+  lastAnalyzed: '2024-01-15T14:30:00Z',
+
+  radarData: [
+    { metric: 'Engagement',     you: 74, them: 61 },
+    { metric: 'Post Frequency', you: 55, them: 88 },
+    { metric: 'Content Quality',you: 80, them: 72 },
+    { metric: 'Response Time',  you: 66, them: 45 },
+    { metric: 'Visual Quality', you: 78, them: 83 },
+    { metric: 'Community',      you: 70, them: 58 },
+  ],
+
+  whatsWorking: [
+    {
+      title: 'Product showcase reels under 30 seconds',
+      detail: 'Their 15-30 second product demo videos consistently receive 3-5x more engagement than static images. Average 1,200 reactions per video vs 380 for images.',
+      metric: '+218% engagement vs their image posts',
+    },
+    {
+      title: 'Weekend morning posting (Fri-Sat 9-11AM)',
+      detail: 'Analysis of 90 posts shows Friday and Saturday morning posts receive significantly higher reach and comment volume than weekday posts.',
+      metric: 'Fri-Sat posts get 2.4x more comments',
+    },
+    {
+      title: 'Price-reveal format posts',
+      detail: 'Posts that tease a product then reveal price in comments generate high comment volume and algorithm boost.',
+      metric: 'Avg 840 comments vs 120 for standard posts',
+    },
+  ],
+
+  whatsNotWorking: [
+    {
+      title: 'Long-form text posts ignored',
+      detail: 'Posts exceeding 150 words receive significantly below-average engagement. Their audience is visual-first.',
+      metric: '67% below average engagement',
+    },
+    {
+      title: 'After-sales complaints going unanswered',
+      detail: '34% of comments mention service issues. Average response time is 18 hours. 22% of complaints receive no reply.',
+      metric: '22% unanswered complaint rate',
+    },
+    {
+      title: 'Repetitive promotional tone',
+      detail: 'Brand voice scores low on authenticity. 78% of posts are pure product promotion with no educational or entertainment value.',
+      metric: 'Authenticity score: 28/100',
+    },
+  ],
+
+  commentSentiment: {
+    positive: 41,
+    neutral: 25,
+    negative: 34,
+    totalAnalyzed: 2847,
+  },
+
+  topComplaints: [
+    { category: 'After-sales service', count: 312, percentage: 34 },
+    { category: 'Delivery delays',     count: 198, percentage: 22 },
+    { category: 'Product quality',     count: 156, percentage: 17 },
+    { category: 'Price too high',      count: 134, percentage: 15 },
+    { category: 'Warranty issues',     count: 109, percentage: 12 },
+  ],
+
+  opportunityFeed: [
+    {
+      id: 'opp_001',
+      postPreview: 'Introducing our new 1.5 ton inverter AC — cooling that lasts...',
+      comment: 'Does this come with 5 year warranty? I had bad experience with previous model and customer service never responded.',
+      commenterName: 'Rafiqul Islam',
+      commentTime: '2024-01-15T11:23:00Z',
+      likes: 47,
+      isAnswered: false,
+      aiDraftReply: "Hi Rafiqul! We understand your concern about after-sales support — it's something we take very seriously at [Your Brand]. Our inverter ACs come with a 5-year compressor warranty and dedicated service centers in every district. We'd love to show you the difference. DM us and we'll answer every question.",
+      opportunity: 'Direct acquisition — unhappy competitor customer seeking warranty assurance',
+    },
+    {
+      id: 'opp_002',
+      postPreview: 'Our new refrigerator series — built for Bangladeshi families...',
+      comment: 'Price ta ektu beshi hoyey gese na? Compared to Samsung same spec e.',
+      commenterName: 'Tamanna Akter',
+      commentTime: '2024-01-15T09:45:00Z',
+      likes: 89,
+      isAnswered: false,
+      aiDraftReply: "Tamanna, great question! When comparing specs, it is also worth comparing what comes after the sale. [Your Brand] offers free installation, 2-year full warranty, and local service centers — costs that competitors often charge extra for. Our total cost of ownership is actually lower. See our refrigerator lineup here: [link]",
+      opportunity: 'Price-sensitive prospect — position on total value, not just price',
+    },
+    {
+      id: 'opp_003',
+      postPreview: 'Walton Smart TV — experience the future of entertainment...',
+      comment: 'Android version is too old. My 2 year old TV still on Android 9. No update ever.',
+      commenterName: 'Shafiul Haque',
+      commentTime: '2024-01-14T16:10:00Z',
+      likes: 124,
+      isAnswered: false,
+      aiDraftReply: "Shafiul, software updates are a real pain point in the industry. Our Smart TVs run on [OS] with guaranteed updates for 3 years — and we push them automatically so you never have to think about it. If you want to compare specs, our team is happy to walk you through it. What size are you looking for?",
+      opportunity: 'Tech-aware customer frustrated with competitor software support',
+    },
+  ],
+}
+
+// --- COMMENT INTELLIGENCE MOCK DATA ---
+
+export const mockCommentFeed = [
+  {
+    id: 'cmt_001',
+    postPreview: 'Excited to announce our new product line launching this Friday...',
+    commenterName: 'Karim Uddin',
+    commenterAvatar: null,
+    comment: 'Finally! Been waiting for this. Will there be an early bird discount?',
+    time: '2024-01-15T14:23:00Z',
+    likes: 12,
+    sentiment: 'positive',
+    sentimentScore: 88,
+    category: 'Question',
+    aiSuggestedReply: "Thank you Karim! Yes, we have a special launch-week offer planned. Stay tuned — we will announce it Thursday night. Make sure notifications are on so you do not miss it!",
+    status: 'pending',
+  },
+  {
+    id: 'cmt_002',
+    postPreview: 'Our customer service team is available 7 days a week...',
+    commenterName: 'Nasrin Begum',
+    commenterAvatar: null,
+    comment: 'Customer service?? I called 6 times last week and nobody picked up. This is a joke.',
+    time: '2024-01-15T13:45:00Z',
+    likes: 34,
+    sentiment: 'negative',
+    sentimentScore: 12,
+    category: 'Complaint',
+    aiSuggestedReply: "Nasrin, we are so sorry about this experience — this is absolutely not the standard we hold ourselves to. Please DM us your contact number right now and our team lead will personally call you within the hour. We want to make this right.",
+    status: 'pending',
+    isAlert: true,
+  },
+  {
+    id: 'cmt_003',
+    postPreview: 'Our customer service team is available 7 days a week...',
+    commenterName: 'Rana Hossain',
+    commenterAvatar: null,
+    comment: 'Worst brand ever. Total scam. Do not buy from them.',
+    time: '2024-01-15T13:30:00Z',
+    likes: 8,
+    sentiment: 'negative',
+    sentimentScore: 2,
+    category: 'Hostile',
+    aiSuggestedReply: "Rana, we are sorry to hear you feel this way. We would genuinely like to understand what went wrong. Please DM us with your order details so we can investigate and resolve this for you.",
+    status: 'pending',
+    isAlert: true,
+  },
+  {
+    id: 'cmt_004',
+    postPreview: 'Exciting new partnership announcement coming soon...',
+    commenterName: 'Dilruba Khanam',
+    commenterAvatar: null,
+    comment: 'Always love the quality of your products. My whole family uses your brand.',
+    time: '2024-01-15T12:10:00Z',
+    likes: 22,
+    sentiment: 'positive',
+    sentimentScore: 95,
+    category: 'Praise',
+    aiSuggestedReply: "Thank you so much Dilruba! This means the world to us. Families like yours are the reason we do what we do. We have something special coming very soon — stay tuned!",
+    status: 'pending',
+  },
+  {
+    id: 'cmt_005',
+    postPreview: 'Check out our latest refrigerator collection...',
+    commenterName: 'Arif Khan',
+    commenterAvatar: null,
+    comment: 'What is the price of the 320L model? And is EMI available?',
+    time: '2024-01-15T11:55:00Z',
+    likes: 5,
+    sentiment: 'neutral',
+    sentimentScore: 55,
+    category: 'Question',
+    aiSuggestedReply: "Hi Arif! The 320L model is priced at ৳42,500. Yes, EMI is available — 0% interest for 6 months with BRAC Bank and Dutch Bangla cards. Want us to send you the full spec sheet? Just DM us!",
+    status: 'replied',
+  },
+]
+
+export const mockCommentStats = {
+  total: 1284,
+  positive: 612,
+  neutral: 389,
+  negative: 283,
+  positivePercent: 48,
+  neutralPercent: 30,
+  negativePercent: 22,
+  avgSentimentScore: 64,
+  alertsToday: 7,
+  repliedToday: 23,
+  pendingReview: 41,
+  sentimentTrend: [
+    { date: 'Jan 9',  score: 58 },
+    { date: 'Jan 10', score: 61 },
+    { date: 'Jan 11', score: 55 },
+    { date: 'Jan 12', score: 63 },
+    { date: 'Jan 13', score: 67 },
+    { date: 'Jan 14', score: 60 },
+    { date: 'Jan 15', score: 64 },
+  ],
+}

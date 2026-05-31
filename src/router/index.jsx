@@ -13,6 +13,9 @@ import Reports from '../pages/Reports'
 import Settings from '../pages/Settings'
 import Pricing from '../pages/Pricing'
 import NotFound from '../pages/NotFound'
+import CompetitorIntelligence from '../pages/CompetitorIntelligence'
+import CompetitorReport from '../pages/CompetitorReport'
+import CommentIntelligence from '../pages/CommentIntelligence'
 
 export default function AppRoutes() {
   return (
@@ -60,6 +63,30 @@ export default function AppRoutes() {
         element={
           <ProtectedRoute>
             <DashboardLayout><Settings /></DashboardLayout>
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/dashboard/competitors"
+        element={
+          <ProtectedRoute>
+            <DashboardLayout><CompetitorIntelligence /></DashboardLayout>
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/dashboard/competitors/:id"
+        element={
+          <ProtectedRoute>
+            <DashboardLayout><CompetitorReport /></DashboardLayout>
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/dashboard/comments"
+        element={
+          <ProtectedRoute>
+            <DashboardLayout><CommentIntelligence /></DashboardLayout>
           </ProtectedRoute>
         }
       />

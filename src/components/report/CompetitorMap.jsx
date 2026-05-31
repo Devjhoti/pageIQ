@@ -1,16 +1,24 @@
 import { RadarChart, Radar, PolarGrid, PolarAngleAxis, PolarRadiusAxis, ResponsiveContainer, Tooltip } from 'recharts'
-import { mockReportData } from '../../lib/mockData'
+import { useReport } from '../../hooks/useReport'
 import Card from '../ui/Card'
 
-export default function CompetitorMap({ reportId = 'b1' }) {
-  const data = mockReportData(reportId)
-  const { competitors } = data
+export default function CompetitorMap() {
+  const { activeReport } = useReport()
+  const data = activeReport || {}
+  const { competitors, brand, score } = data
+
+  if (!competitors || !brand) return null
+
+  const parseFollowers = (f) => {
+    if (typeof f === 'string') return Number(f.replace(/[^0-9.]/g, '')) * (f.includes('M') ? 100 : 1)
+    return (f || 0) / 10000
+  }
 
   const radarData = [
-    { metric: 'Followers', brand: data.brand.followers / 10000, ...Object.fromEntries(competitors.map((c) => [c.name, Number(c.followers.replace('M', '')) * 100])) },
-    { metric: 'Engagement', brand: data.brand.engagementRate * 10, ...Object.fromEntries(competitors.map((c) => [c.name, c.engagementRate * 10])) },
-    { metric: 'Post Freq', brand: 3, ...Object.fromEntries(competitors.map((c) => [c.name, Number(c.postFrequency.split('/')[0])])) },
-    { metric: 'Brand Score', brand: data.score, ...Object.fromEntries(competitors.map((c) => [c.name, c.brandScore])) },
+    { metric: 'Followers', brand: parseFollowers(brand.followers), ...Object.fromEntries(competitors.map((c) => [c.name, parseFollowers(c.followers)])) },
+    { metric: 'Engagement', brand: (brand.engagementRate || 0) * 10, ...Object.fromEntries(competitors.map((c) => [c.name, (c.engagementRate || 0) * 10])) },
+    { metric: 'Post Freq', brand: 3, ...Object.fromEntries(competitors.map((c) => [c.name, typeof c.postFrequency === 'number' ? c.postFrequency : Number(String(c.postFrequency).split('/')[0]) || 10])) },
+    { metric: 'Brand Score', brand: score || 0, ...Object.fromEntries(competitors.map((c) => [c.name, c.brandScore || 0])) },
   ]
 
   const colors = ['var(--accent)', 'var(--accent-secondary)', 'var(--warning)', 'var(--text-muted)', 'var(--danger)']
@@ -30,16 +38,16 @@ export default function CompetitorMap({ reportId = 'b1' }) {
           </thead>
           <tbody>
             <tr className="border-b border-[--accent]/20 bg-[--accent]/5">
-              <td className="px-4 py-3 font-medium text-[--accent] font-body">{data.brand.name} (You)</td>
-              <td className="px-4 py-3 text-[--text-primary] font-body">{data.brand.followers.toLocaleString()}</td>
-              <td className="px-4 py-3 text-[--text-primary] font-body">{data.brand.engagementRate}%</td>
+              <td className="px-4 py-3 font-medium text-[--accent] font-body">{brand.name} (You)</td>
+              <td className="px-4 py-3 text-[--text-primary] font-body">{(brand.followers || 0).toLocaleString()}</td>
+              <td className="px-4 py-3 text-[--text-primary] font-body">{brand.engagementRate || 0}%</td>
               <td className="px-4 py-3 text-[--text-primary] font-body">—</td>
-              <td className="px-4 py-3 font-mono text-[--accent]">{data.score}</td>
+              <td className="px-4 py-3 font-mono text-[--accent]">{score || 0}</td>
             </tr>
             {competitors.map((c, i) => (
               <tr key={c.name} className="border-b border-[--border] hover:bg-[--bg-tertiary]/50">
                 <td className="px-4 py-3 text-[--text-primary] font-body">{c.name}</td>
-                <td className="px-4 py-3 text-[--text-secondary] font-body">{c.followers}</td>
+                <td className="px-4 py-3 text-[--text-secondary] font-body">{typeof c.followers === 'number' ? c.followers.toLocaleString() : c.followers}</td>
                 <td className="px-4 py-3 text-[--text-secondary] font-body">{c.engagementRate}%</td>
                 <td className="px-4 py-3 text-[--text-secondary] font-body">{c.postFrequency}</td>
                 <td className="px-4 py-3 font-mono text-[--text-secondary]">{c.brandScore}</td>
@@ -57,13 +65,11 @@ export default function CompetitorMap({ reportId = 'b1' }) {
               <PolarGrid stroke="var(--border)" />
               <PolarAngleAxis dataKey="metric" tick={{ fill: 'var(--text-muted)', fontSize: 11 }} />
               <PolarRadiusAxis tick={{ fill: 'var(--text-muted)', fontSize: 10 }} axisLine={false} tickLine={false} />
-              <Radar name={data.brand.name} dataKey="brand" stroke={colors[0]} fill={colors[0]} fillOpacity={0.15} strokeWidth={2} />
+              <Radar name={brand.name} dataKey="brand" stroke={colors[0]} fill={colors[0]} fillOpacity={0.15} strokeWidth={2} />
               {competitors.map((c, i) => (
                 <Radar key={c.name} name={c.name} dataKey={c.name} stroke={colors[(i + 1) % colors.length]} fill={colors[(i + 1) % colors.length]} fillOpacity={0.05} strokeWidth={1.5} />
               ))}
-              <Tooltip
-                contentStyle={{ background: 'var(--bg-secondary)', border: '1px solid var(--border)', borderRadius: 8, fontSize: 12 }}
-              />
+              <Tooltip contentStyle={{ background: 'var(--bg-secondary)', border: '1px solid var(--border)', borderRadius: 8, fontSize: 12 }} />
             </RadarChart>
           </ResponsiveContainer>
         </div>

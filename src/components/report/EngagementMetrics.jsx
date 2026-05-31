@@ -1,12 +1,10 @@
-import { mockReportData } from '../../lib/mockData'
+import { useReport } from '../../hooks/useReport'
 import { formatNumber } from '../../lib/utils'
 import { useCountUp } from '../../hooks/useCountUp'
-import { motion } from 'framer-motion'
 import Card from '../ui/Card'
 
 function AnimatedMetric({ label, value, suffix = '', icon: Icon }) {
   const count = useCountUp(Number(value) || 0, 1500)
-
   return (
     <Card>
       <div className="flex items-center gap-2 mb-1">
@@ -20,13 +18,15 @@ function AnimatedMetric({ label, value, suffix = '', icon: Icon }) {
   )
 }
 
-export default function EngagementMetrics({ reportId = 'b1' }) {
-  const data = mockReportData(reportId)
+export default function EngagementMetrics() {
+  const { activeReport } = useReport()
+  const data = activeReport || {}
+  const brand = data.brand || {}
 
   const metrics = [
-    { label: 'Total Followers', value: data.brand.followers },
-    { label: 'Weekly Reach', value: data.brand.avgWeeklyReach },
-    { label: 'Engagement Rate', value: data.brand.engagementRate, suffix: '%' },
+    { label: 'Total Followers', value: brand.followers || 0 },
+    { label: 'Weekly Reach', value: brand.avgWeeklyReach || 0 },
+    { label: 'Engagement Rate', value: brand.engagementRate || 0, suffix: '%' },
     { label: 'Total Posts (30d)', value: 47 },
     { label: 'Avg Likes/Post', value: 1284 },
     { label: 'Avg Comments/Post', value: 342 },

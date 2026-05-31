@@ -1,6 +1,8 @@
+import { useState, useEffect } from 'react'
 import { useAuth } from '../hooks/useAuth'
 import { getGreeting } from '../lib/utils'
-import { mockDashboardStats } from '../lib/mockData'
+import { getDashboardStats } from '../lib/services/dashboardService'
+import { listReports } from '../lib/services/reportsService'
 import { BarChart3, FileText, Target, TrendingUp } from 'lucide-react'
 import PageWrapper from '../components/layout/PageWrapper'
 import StatCard from '../components/dashboard/StatCard'
@@ -10,13 +12,19 @@ import ActivityFeed from '../components/dashboard/ActivityFeed'
 
 export default function Dashboard() {
   const { user } = useAuth()
-  const stats = mockDashboardStats()
+  const [stats, setStats] = useState(null)
+  const [recentReports, setRecentReports] = useState([])
+
+  useEffect(() => {
+    getDashboardStats().then(setStats).catch(() => {})
+    listReports().then(setRecentReports).catch(() => {})
+  }, [])
 
   const statCards = [
-    { icon: FileText, label: 'Total Reports', value: stats.totalReports, color: 'accent', trend: 12 },
-    { icon: BarChart3, label: 'Pages Analyzed', value: stats.pagesAnalyzed, color: 'blue', trend: 8 },
-    { icon: Target, label: 'Avg Brand Score', value: stats.avgBrandScore, color: 'accent', trend: 5 },
-    { icon: TrendingUp, label: 'Reports This Month', value: stats.reportsThisMonth, color: 'blue', trend: null },
+    { icon: FileText, label: 'Total Reports', value: stats?.totalReports ?? 0, color: 'accent', trend: 12 },
+    { icon: BarChart3, label: 'Pages Analyzed', value: stats?.pagesAnalyzed ?? 0, color: 'blue', trend: 8 },
+    { icon: Target, label: 'Avg Brand Score', value: stats?.avgBrandScore ?? 0, color: 'accent', trend: 5 },
+    { icon: TrendingUp, label: 'Reports This Month', value: stats?.reportsThisMonth ?? 0, color: 'blue', trend: null },
   ]
 
   return (
@@ -34,7 +42,7 @@ export default function Dashboard() {
 
         <div className="grid lg:grid-cols-3 gap-6">
           <div className="lg:col-span-2 space-y-6">
-            <RecentReports />
+            <RecentReports reports={recentReports} />
           </div>
           <div className="space-y-6">
             <QuickAnalyze />

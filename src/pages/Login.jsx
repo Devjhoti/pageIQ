@@ -28,7 +28,8 @@ export default function Login() {
       await login(email, password)
       navigate('/dashboard')
     } catch (err) {
-      setError(err.message)
+      const msg = err.response?.data?.error || err.message
+      setError(msg === 'Network Error' ? 'Cannot reach server — make sure the backend is running on port 3001' : msg)
     } finally {
       setSubmitting(false)
     }

@@ -1,10 +1,9 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { Search, Filter, LayoutGrid, List, ArrowUpDown, Eye } from 'lucide-react'
+import { Search, Filter, LayoutGrid, List, ArrowUpDown } from 'lucide-react'
 import { motion } from 'framer-motion'
-import { cn } from '../lib/utils'
-import { mockReportsList } from '../lib/mockData'
-import { formatDate } from '../lib/utils'
+import { cn, formatDate } from '../lib/utils'
+import { listReports } from '../lib/services/reportsService'
 import PageWrapper from '../components/layout/PageWrapper'
 import Button from '../components/ui/Button'
 import Badge from '../components/ui/Badge'
@@ -13,9 +12,25 @@ export default function Reports() {
   const [search, setSearch] = useState('')
   const [view, setView] = useState('table')
   const [sortBy, setSortBy] = useState('date')
+  const [allReports, setAllReports] = useState([])
+  const [loading, setLoading] = useState(true)
   const navigate = useNavigate()
 
-  const allReports = mockReportsList()
+  useEffect(() => {
+    listReports()
+      .then((reports) => setAllReports(reports.map((r) => ({
+        id: r.id,
+        brand: r.brand_name,
+        slug: r.brand_slug,
+        score: r.score,
+        date: r.created_at,
+        status: r.status,
+        industry: r.industry,
+      }))))
+      .catch(() => {})
+      .finally(() => setLoading(false))
+  }, [])
+
   const filtered = allReports
     .filter((r) => r.brand.toLowerCase().includes(search.toLowerCase()))
     .sort((a, b) => {
@@ -62,12 +77,14 @@ export default function Reports() {
           </div>
         </div>
 
-        {filtered.length === 0 ? (
-          <motion.div
-            initial={{ opacity: 0, y: 10 }}
-            animate={{ opacity: 1, y: 0 }}
-            className="border border-[--border] bg-[--bg-secondary] rounded-xl p-12 text-center"
-          >
+        {loading ? (
+          <div className="space-y-4 animate-pulse">
+            {[1, 2, 3].map((i) => (
+              <div key={i} className="h-16 rounded-xl bg-[--bg-tertiary]" />
+            ))}
+          </div>
+        ) : filtered.length === 0 ? (
+          <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} className="border border-[--border] bg-[--bg-secondary] rounded-xl p-12 text-center">
             <div className="mx-auto mb-4 w-14 h-14 rounded-full bg-[--bg-tertiary] flex items-center justify-center">
               <Search size={24} className="text-[--text-muted]" />
             </div>
@@ -76,9 +93,7 @@ export default function Reports() {
               {search ? 'Try a different search term' : 'Run your first analysis to see reports here'}
             </p>
             {!search && (
-              <Button onClick={() => navigate('/dashboard/new')} variant="primary">
-                New Analysis
-              </Button>
+              <Button onClick={() => navigate('/dashboard/new')} variant="primary">New Analysis</Button>
             )}
           </motion.div>
         ) : view === 'table' ? (
@@ -96,16 +111,10 @@ export default function Reports() {
               </thead>
               <tbody>
                 {filtered.map((r) => (
-                  <tr
-                    key={r.id}
-                    className="border-b border-[--border] last:border-0 hover:bg-[--bg-tertiary]/50 transition-colors cursor-pointer"
-                    onClick={() => navigate(`/dashboard/reports/${r.id}`)}
-                  >
+                  <tr key={r.id} className="border-b border-[--border] last:border-0 hover:bg-[--bg-tertiary]/50 transition-colors cursor-pointer" onClick={() => navigate(`/dashboard/reports/${r.id}`)}>
                     <td className="px-5 py-3">
                       <div className="flex items-center gap-3">
-                        <div className="w-8 h-8 rounded-lg bg-[--accent-glow] flex items-center justify-center text-xs font-bold text-[--accent] font-display">
-                          {r.brand.charAt(0)}
-                        </div>
+                        <div className="w-8 h-8 rounded-lg bg-[--accent-glow] flex items-center justify-center text-xs font-bold text-[--accent] font-display">{r.brand.charAt(0)}</div>
                         <span className="text-[--text-primary] font-body font-medium">{r.brand}</span>
                       </div>
                     </td>
@@ -118,12 +127,8 @@ export default function Reports() {
                       )}
                     </td>
                     <td className="px-5 py-3 text-[--text-secondary] font-body">{formatDate(r.date)}</td>
-                    <td className="px-5 py-3">
-                      <Badge variant={r.status === 'completed' ? 'success' : 'danger'} size="sm">{r.status}</Badge>
-                    </td>
-                    <td className="px-5 py-3 text-right">
-                      <span className="text-xs text-[--accent] font-body">View</span>
-                    </td>
+                    <td className="px-5 py-3"><Badge variant={r.status === 'completed' ? 'success' : 'danger'} size="sm">{r.status}</Badge></td>
+                    <td className="px-5 py-3 text-right"><span className="text-xs text-[--accent] font-body">View</span></td>
                   </tr>
                 ))}
               </tbody>
@@ -132,17 +137,9 @@ export default function Reports() {
         ) : (
           <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-4">
             {filtered.map((r) => (
-              <motion.div
-                key={r.id}
-                initial={{ opacity: 0, y: 10 }}
-                animate={{ opacity: 1, y: 0 }}
-                className="border border-[--border] bg-[--bg-secondary] rounded-xl p-5 hover:border-[--border-accent] transition-colors cursor-pointer"
-                onClick={() => navigate(`/dashboard/reports/${r.id}`)}
-              >
+              <motion.div key={r.id} initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} className="border border-[--border] bg-[--bg-secondary] rounded-xl p-5 hover:border-[--border-accent] transition-colors cursor-pointer" onClick={() => navigate(`/dashboard/reports/${r.id}`)}>
                 <div className="flex items-center gap-3 mb-3">
-                  <div className="w-10 h-10 rounded-lg bg-[--accent-glow] flex items-center justify-center text-sm font-bold text-[--accent] font-display">
-                    {r.brand.charAt(0)}
-                  </div>
+                  <div className="w-10 h-10 rounded-lg bg-[--accent-glow] flex items-center justify-center text-sm font-bold text-[--accent] font-display">{r.brand.charAt(0)}</div>
                   <div className="flex-1 min-w-0">
                     <p className="text-sm font-semibold text-[--text-primary] font-body truncate">{r.brand}</p>
                     <p className="text-xs text-[--text-muted] font-body">{r.industry}</p>

@@ -1,7 +1,10 @@
 import { useState } from 'react'
 import { User, Key, Bell, CreditCard, AlertTriangle, Save, Eye, EyeOff, Plus, Trash2 } from 'lucide-react'
 import { motion, AnimatePresence } from 'framer-motion'
+import toast from 'react-hot-toast'
 import { cn } from '../lib/utils'
+import { updateProfile, deleteAccount } from '../lib/services/authService'
+import { useAuth } from '../hooks/useAuth'
 import PageWrapper from '../components/layout/PageWrapper'
 import Button from '../components/ui/Button'
 import Input from '../components/ui/Input'
@@ -17,6 +20,7 @@ const tabs = [
 ]
 
 export default function Settings() {
+  const { user, logout } = useAuth()
   const [activeTab, setActiveTab] = useState('profile')
   const [saved, setSaved] = useState(false)
   const [savedKey, setSavedKey] = useState('')
@@ -29,9 +33,28 @@ export default function Settings() {
     pushWeeklyDigest: false,
   })
 
-  function handleSave() {
-    setSaved(true)
-    setTimeout(() => setSaved(false), 2000)
+  async function handleSave() {
+    try {
+      const nameInput = document.getElementById('settings-name')
+      if (nameInput) {
+        await updateProfile({ name: nameInput.value })
+      }
+      setSaved(true)
+      toast.success('Settings saved')
+      setTimeout(() => setSaved(false), 2000)
+    } catch (err) {
+      toast.error('Failed to save settings')
+    }
+  }
+
+  async function handleDeleteAccount() {
+    try {
+      await deleteAccount()
+      toast.success('Account deleted')
+      logout()
+    } catch (err) {
+      toast.error('Failed to delete account')
+    }
   }
 
   return (
@@ -71,12 +94,14 @@ export default function Settings() {
                     <p className="text-sm text-[--text-secondary] font-body">Manage your personal information</p>
                   </div>
                   <div className="flex items-center gap-4">
-                    <div className="w-16 h-16 rounded-full bg-[--accent-glow] flex items-center justify-center text-xl font-bold text-[--accent] font-display">R</div>
+                    <div className="w-16 h-16 rounded-full bg-[--accent-glow] flex items-center justify-center text-xl font-bold text-[--accent] font-display">
+                      {(user?.name || 'U').charAt(0)}
+                    </div>
                     <Button variant="secondary" size="sm">Change Avatar</Button>
                   </div>
                   <div className="space-y-4">
-                    <Input label="Full Name" type="text" defaultValue="Rahul Sharma" />
-                    <Input label="Email" type="email" defaultValue="demo@pageiq.io" />
+                    <Input id="settings-name" label="Full Name" type="text" defaultValue={user?.name || ''} />
+                    <Input label="Email" type="email" defaultValue={user?.email || ''} disabled />
                     <Input label="Company" type="text" placeholder="Your company" />
                   </div>
                   <Button onClick={handleSave} variant="primary">
@@ -94,31 +119,16 @@ export default function Settings() {
                   <Card>
                     <div className="space-y-3">
                       <div className="relative">
-                        <Input
-                          label="Facebook API Key"
-                          type={showSavedKey ? 'text' : 'password'}
-                          value={savedKey || 'EAACxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx'}
-                          onChange={(e) => setSavedKey(e.target.value)}
-                          icon={Key}
-                        />
-                        <button
-                          onClick={() => setShowSavedKey(!showSavedKey)}
-                          className="absolute right-3 top-[38px] text-[--text-muted] hover:text-[--text-primary]"
-                        >
+                        <Input label="Facebook API Key" type={showSavedKey ? 'text' : 'password'} value={savedKey || 'EAACxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx'} onChange={(e) => setSavedKey(e.target.value)} icon={Key} />
+                        <button onClick={() => setShowSavedKey(!showSavedKey)} className="absolute right-3 top-[38px] text-[--text-muted] hover:text-[--text-primary]">
                           {showSavedKey ? <EyeOff size={16} /> : <Eye size={16} />}
                         </button>
                       </div>
-                      <Button variant="primary">Update Key</Button>
+                      <Button variant="primary" onClick={() => toast.success('API key updated')}>Update Key</Button>
                     </div>
                   </Card>
                   <Card>
-                    <div className="flex items-center justify-between">
-                      <div>
-                        <p className="text-sm font-medium text-[--text-primary] font-body">Facebook App (Optional)</p>
-                        <p className="text-xs text-[--text-muted] font-body">Connected as PageIQ App</p>
-                      </div>
-                      <Badge variant="success" className="text-xs">Connected</Badge>
-                    </div>
+                    <div className="text-sm text-[--text-secondary] font-body">Facebook App: Not connected</div>
                   </Card>
                 </div>
               )}
@@ -137,18 +147,11 @@ export default function Settings() {
                             {key.replace(/([A-Z])/g, ' $1').replace(/^./, (s) => s.toUpperCase())}
                           </p>
                         </div>
-                        <input
-                          type="checkbox"
-                          checked={val}
-                          onChange={() => setNotifications((prev) => ({ ...prev, [key]: !prev[key] }))}
-                          className="accent-[--accent]"
-                        />
+                        <input type="checkbox" checked={val} onChange={() => setNotifications((prev) => ({ ...prev, [key]: !prev[key] }))} className="accent-[--accent]" />
                       </label>
                     ))}
                   </div>
-                  <Button onClick={handleSave} variant="primary">
-                    {saved ? 'Saved!' : 'Save Preferences'}
-                  </Button>
+                  <Button onClick={handleSave} variant="primary">{saved ? 'Saved!' : 'Save Preferences'}</Button>
                 </div>
               )}
 
@@ -162,20 +165,18 @@ export default function Settings() {
                     <div className="flex items-center justify-between mb-4">
                       <div>
                         <p className="text-sm font-medium text-[--text-primary] font-body">Current Plan</p>
-                        <p className="text-xs text-[--text-muted] font-body">You are on the Pro plan</p>
+                        <p className="text-xs text-[--text-muted] font-body">You are on the {user?.plan || 'Free'} plan</p>
                       </div>
-                      <Badge variant="info">Pro</Badge>
+                      <span className="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium border bg-[--accent-secondary]/10 text-[--accent-secondary] border-[--accent-secondary]/20">{user?.plan || 'Free'}</span>
                     </div>
                     <div className="flex items-center justify-between text-sm py-2 border-t border-[--border]">
                       <span className="text-[--text-secondary] font-body">Price</span>
-                      <span className="text-[--text-primary] font-body font-medium">$29/month</span>
-                    </div>
-                    <div className="flex items-center justify-between text-sm py-2 border-t border-[--border]">
-                      <span className="text-[--text-secondary] font-body">Reports Used</span>
-                      <span className="text-[--text-primary] font-body">3 / 30</span>
+                      <span className="text-[--text-primary] font-body font-medium">{user?.plan === 'Pro' ? '$29/month' : user?.plan === 'Agency' ? '$99/month' : 'Free'}</span>
                     </div>
                     <div className="mt-4">
-                      <Button variant="secondary" className="w-full">Upgrade to Agency</Button>
+                      <Button variant="secondary" className="w-full" onClick={() => toast.success('Upgrade page coming soon')}>
+                        {user?.plan === 'Free' ? 'Upgrade to Pro' : user?.plan === 'Pro' ? 'Upgrade to Agency' : 'Manage Subscription'}
+                      </Button>
                     </div>
                   </Card>
                 </div>
@@ -191,14 +192,9 @@ export default function Settings() {
                     <div className="flex items-center justify-between">
                       <div>
                         <p className="text-sm font-medium text-[--text-primary] font-body">Delete Account</p>
-                        <p className="text-xs text-[--text-secondary] font-body">
-                          Permanently remove your account and all associated data
-                        </p>
+                        <p className="text-xs text-[--text-secondary] font-body">Permanently remove your account and all associated data</p>
                       </div>
-                      <Button variant="danger" size="sm" onClick={() => setDeleteConfirmOpen(true)}>
-                        <Trash2 size={14} />
-                        Delete
-                      </Button>
+                      <Button variant="danger" size="sm" onClick={() => setDeleteConfirmOpen(true)}><Trash2 size={14} /> Delete</Button>
                     </div>
                   </Card>
                 </div>
@@ -215,25 +211,10 @@ export default function Settings() {
           </p>
           <div className="flex gap-3 justify-end">
             <Button variant="ghost" onClick={() => setDeleteConfirmOpen(false)}>Cancel</Button>
-            <Button variant="danger" onClick={() => { setDeleteConfirmOpen(false); handleSave() }}>
-              Confirm Delete
-            </Button>
+            <Button variant="danger" onClick={() => { setDeleteConfirmOpen(false); handleDeleteAccount() }}>Confirm Delete</Button>
           </div>
         </div>
       </Modal>
     </PageWrapper>
-  )
-}
-
-function Badge({ variant = 'default', className, children }) {
-  const variants = {
-    default: 'bg-[--bg-tertiary] text-[--text-secondary] border-[--border]',
-    success: 'bg-[--success]/10 text-[--success] border-[--success]/20',
-    info: 'bg-[--accent-secondary]/10 text-[--accent-secondary] border-[--accent-secondary]/20',
-  }
-  return (
-    <span className={cn('inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium border', variants[variant], className)}>
-      {children}
-    </span>
   )
 }

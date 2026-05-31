@@ -44,6 +44,7 @@ export default function ReportView() {
       .then((report) => {
         setReportMeta({ id: report.id, brand_name: report.brand_name, score: report.score, status: report.status })
         setActiveReport(report.report_data || report)
+        console.log('activeReport:', activeReport)
       })
       .catch((err) => setError(err.message || 'Failed to load report'))
       .finally(() => setLoading(false))
@@ -140,7 +141,7 @@ export default function ReportView() {
                 onClick={() => navigate('/dashboard/new')}
                 className="shrink-0 text-xs font-semibold text-[--accent] hover:underline font-body"
               >
-                Upgrade Report \u2192
+                Upgrade Report →
               </button>
             </motion.div>
           )}

@@ -31,7 +31,19 @@ export default async function handler(req, res) {
       const insights = await fetchPageInsights(fbPageId, fbAccessToken)
       reportData = await generateComprehensiveReport(pageUrl, brandName, fbPageData, posts, insights)
     } else {
-      reportData = await generateGeneralReport(pageUrl, brandName)
+      // Fetch real public page data using app token — no user login needed
+      let realPageData = null
+      try {
+        const { extractPageSlug, fetchPublicPageData, getAppAccessToken } = await import('../_lib/facebook.js')
+        const pageSlug = extractPageSlug(pageUrl)
+        if (pageSlug) {
+          const appToken = getAppAccessToken()
+          realPageData = await fetchPublicPageData(pageSlug, appToken)
+        }
+      } catch (err) {
+        console.log('Public page fetch failed (non-critical):', err.message)
+      }
+      reportData = await generateGeneralReport(pageUrl, brandName, realPageData)
     }
 
     const slug = brandName.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, '')

@@ -86,3 +86,12 @@ export async function fetchPageInsights(pageId, pageAccessToken) {
     return []
   }
 }
+
+// Generate an app access token using App ID and Secret
+// This allows reading public page data without user login
+export function getAppAccessToken() {
+  const appId = process.env.FB_APP_ID
+  const appSecret = process.env.FB_APP_SECRET
+  if (!appId || !appSecret) return null
+  return `${appId}|${appSecret}`
+}

@@ -2,11 +2,22 @@ import Groq from 'groq-sdk'
 
 const groq = new Groq({ apiKey: process.env.GROQ_API_KEY })
 
-export async function generateGeneralReport(pageUrl, brandName) {
+export async function generateGeneralReport(pageUrl, brandName, realPageData = null) {
   const prompt = `You are a senior brand intelligence analyst with deep knowledge of digital marketing, social media strategy, and the Bangladeshi market.
 
 Analyze the Facebook business page for: ${brandName}
 Page URL: ${pageUrl}
+${realPageData ? `
+REAL FACEBOOK DATA (use these exact numbers — do not estimate):
+- Page Name: ${realPageData.name}
+- Real Follower Count: ${realPageData.fan_count || realPageData.followers_count || 'unavailable'}
+- Category: ${realPageData.category}
+- About: ${realPageData.about || realPageData.description || 'not provided'}
+- Verification Status: ${realPageData.verification_status || 'unverified'}
+- Website: ${realPageData.website || 'not listed'}
+
+Use the real follower count above in your response. Do not estimate or use ranges if the real number is provided.
+` : '(No real-time Facebook data available — use your training knowledge)'}
 
 Return ONLY a valid JSON object with EXACTLY this structure. No markdown. No explanation.
 
@@ -14,12 +25,12 @@ Return ONLY a valid JSON object with EXACTLY this structure. No markdown. No exp
   "reportType": "general",
   "brandScore": <integer 0-100>,
   "brand": {
-    "name": "<proper brand name, not URL slug>",
+    "name": "${realPageData?.name || brandName} — use the real page name, not the URL slug",
     "industry": "<industry>",
     "category": "<specific category>",
     "summary": "<2-3 sentences about this brand>",
     "voiceTags": ["<tag1>", "<tag2>", "<tag3>"],
-    "estimatedFollowers": "<range e.g. 10K-50K>",
+    "estimatedFollowers": "${realPageData?.fan_count ? realPageData.fan_count + ' (real)' : 'estimated range'}",
     "estimatedEngagement": "<estimated engagement rate range>",
     "presenceStrength": <integer 0-100>
   },

@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router-dom'
 import { Search, Check, ArrowRight, ArrowLeft, CheckCircle } from 'lucide-react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { cn } from '../lib/utils'
-import { startAnalysis, getAnalysisStatus } from '../lib/services/analysisService'
+import { startAnalysis } from '../lib/services/analysisService'
 import api from '../lib/api'
 import PageWrapper from '../components/layout/PageWrapper'
 import Button from '../components/ui/Button'
@@ -19,7 +19,6 @@ export default function NewAnalysis() {
   const [urlError, setUrlError] = useState('')
   const [fbConnected, setFbConnected] = useState(false)
   const [fbAccessToken, setFbAccessToken] = useState(null)
-  const [fbPages, setFbPages] = useState([])
   const [analysisType, setAnalysisType] = useState('general')
   const [connectingFb, setConnectingFb] = useState(false)
   const [analyzing, setAnalyzing] = useState(false)
@@ -39,16 +38,17 @@ export default function NewAnalysis() {
     const fbError = params.get('fb_error')
 
     if (fbToken && fbConnectedParam === 'true') {
+      sessionStorage.setItem('pageiq_fb_token', fbToken)
       setFbAccessToken(fbToken)
       setFbConnected(true)
       setAnalysisType('comprehensive')
       setStep(1)
-      window.history.replaceState({}, '', '/dashboard/new')
+      window.history.replaceState({}, document.title, '/dashboard/new')
     }
 
     if (fbError) {
       toast.error('Facebook connection failed. You can still get a general report.')
-      window.history.replaceState({}, '', '/dashboard/new')
+      window.history.replaceState({}, document.title, '/dashboard/new')
     }
   }, [])
 
@@ -62,7 +62,8 @@ export default function NewAnalysis() {
         setUrlError('Please enter a standard Facebook page URL (e.g. facebook.com/yourbrand). If your page uses a /people/ URL, set a username in Facebook Page Settings first.')
         return
       }
-      setUrlError(''); setStep(1)
+      setUrlError('')
+      setStep(1)
     } else if (step === 1) {
       setStep(2)
     }
@@ -73,7 +74,7 @@ export default function NewAnalysis() {
   async function handleConnectFacebook() {
     setConnectingFb(true)
     try {
-      const { data } = await api.get('/facebook/oauth-url', {
+      const { data } = await api.get('/api/facebook/oauth-url', {
         params: { state: 'pageiq_connect' }
       })
       window.location.href = data.url
@@ -101,56 +102,53 @@ export default function NewAnalysis() {
 
   async function startAnalysisFlow() {
     setAnalyzing(true)
-    try {
-      const analysis = await startAnalysis(
-        fbUrl,
-        brandName || fbUrl,
-        analysisType,
-        fbAccessToken || null
-      )
-      const id = analysis.id
 
-      for (let i = 0; i < loadingStages.length; i++) {
-        setCurrentStage(i)
-        const start = Date.now()
-        const duration = loadingStages[i].duration
-        await new Promise((resolve) => {
-          function animate() {
-            const elapsed = Date.now() - start
-            const progress = Math.min(elapsed / duration, 1)
-            setStageProgress(progress)
-            if (progress < 1) requestAnimationFrame(animate)
-            else resolve()
-          }
-          requestAnimationFrame(animate)
-        })
-      }
+    // Start API call and animation simultaneously
+    const token = fbAccessToken || sessionStorage.getItem('pageiq_fb_token') || null
 
-      setFinalizing(true)
+    const analysisPromise = startAnalysis(
+      fbUrl,
+      brandName || fbUrl,
+      analysisType,
+      token
+    )
 
-      const poll = setInterval(async () => {
-        try {
-          const status = await getAnalysisStatus(id)
-
-          if (status.status === 'completed' && status.report_id) {
-            clearInterval(poll)
-            navigate(`/dashboard/reports/${status.report_id}`)
-          }
-
-          if (status.status === 'failed') {
-            clearInterval(poll)
-            toast.error(status.error_message || 'Analysis failed. Please try again.')
-            setAnalyzing(false)
-            setFinalizing(false)
-          }
-        } catch (err) {
-          clearInterval(poll)
-          navigate('/dashboard/reports')
+    // Run animation while API call happens in background
+    for (let i = 0; i < loadingStages.length; i++) {
+      setCurrentStage(i)
+      const start = Date.now()
+      const duration = loadingStages[i].duration
+      await new Promise((resolve) => {
+        function animate() {
+          const elapsed = Date.now() - start
+          const progress = Math.min(elapsed / duration, 1)
+          setStageProgress(progress)
+          if (progress < 1) requestAnimationFrame(animate)
+          else resolve()
         }
-      }, 2000)
+        requestAnimationFrame(animate)
+      })
+    }
+
+    // Animation done — now wait for API if not finished yet
+    setFinalizing(true)
+
+    try {
+      const result = await analysisPromise
+      sessionStorage.removeItem('pageiq_fb_token')
+
+      const reportId = result.reportId || result.id
+      if (reportId) {
+        navigate(`/dashboard/reports/${reportId}`)
+      } else {
+        toast.error('Report created but could not navigate. Check your reports.')
+        navigate('/dashboard/reports')
+      }
     } catch (err) {
       console.error('Analysis failed:', err)
+      toast.error(err.response?.data?.error || 'Analysis failed. Please try again.')
       setAnalyzing(false)
+      setFinalizing(false)
     }
   }
 
@@ -198,65 +196,37 @@ export default function NewAnalysis() {
               )}
 
               {step === 1 && (
-                <motion.div
-                  key="step2"
-                  initial={{ opacity: 0, x: 20 }}
-                  animate={{ opacity: 1, x: 0 }}
-                  exit={{ opacity: 0, x: -20 }}
-                  className="space-y-6"
-                >
+                <motion.div key="step2" initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -20 }} className="space-y-6">
                   <div>
-                    <h2 className="text-lg font-semibold text-[--text-primary] font-display">
-                      Connect Your Account
-                    </h2>
-                    <p className="text-sm text-[--text-secondary] font-body mt-1">
-                      Connect Facebook for a comprehensive report with real metrics, or skip for an AI-powered general report.
-                    </p>
+                    <h2 className="text-lg font-semibold text-[--text-primary] font-display">Connect Your Account</h2>
+                    <p className="text-sm text-[--text-secondary] font-body mt-1">Connect Facebook for a comprehensive report with real metrics, or skip for an AI-powered general report.</p>
                   </div>
 
                   <button
                     onClick={handleConnectFacebook}
                     disabled={connectingFb || fbConnected}
-                    className={cn(
-                      'w-full p-5 rounded-xl border-2 text-left transition-all duration-200 group',
-                      fbConnected
-                        ? 'border-[--accent] bg-[--accent]/5'
-                        : 'border-[--border] hover:border-[--accent] hover:bg-[--accent]/5'
-                    )}
+                    className={cn('w-full p-5 rounded-xl border-2 text-left transition-all duration-200 group', fbConnected ? 'border-[--accent] bg-[--accent]/5' : 'border-[--border] hover:border-[--accent] hover:bg-[--accent]/5')}
                   >
                     <div className="flex items-start gap-4">
-                      <div className={cn(
-                        'w-10 h-10 rounded-lg flex items-center justify-center shrink-0',
-                        fbConnected ? 'bg-[--accent]' : 'bg-[#1877F2]/20'
-                      )}>
-                        {fbConnected
-                          ? <Check size={20} className="text-[--bg-primary]" />
-                          : <span className="text-[#1877F2] font-bold text-sm">f</span>
-                        }
+                      <div className={cn('w-10 h-10 rounded-lg flex items-center justify-center shrink-0', fbConnected ? 'bg-[--accent]' : 'bg-[#1877F2]/20')}>
+                        {fbConnected ? <Check size={20} className="text-[--bg-primary]" /> : <span className="text-[#1877F2] font-bold text-sm">f</span>}
                       </div>
                       <div className="flex-1 min-w-0">
                         <p className="font-semibold text-[--text-primary] font-body text-sm">
                           {fbConnected ? 'Facebook Connected \u2713' : connectingFb ? 'Connecting...' : 'Connect with Facebook'}
                         </p>
                         <p className="text-xs text-[--text-secondary] font-body mt-1">
-                          {fbConnected
-                            ? 'Your page metrics, audience data and insights will be included.'
-                            : 'Get real follower counts, engagement rates, audience demographics, and post performance data.'
-                          }
+                          {fbConnected ? 'Your page metrics, audience data and insights will be included.' : 'Get real follower counts, engagement rates, audience demographics, and post performance data.'}
                         </p>
                         {!fbConnected && (
                           <div className="flex flex-wrap gap-2 mt-3">
                             {['Real metrics', 'Audience demographics', 'Post analytics', 'Engagement data'].map(tag => (
-                              <span key={tag} className="text-xs px-2 py-0.5 rounded-full bg-[--accent]/10 text-[--accent] font-body">
-                                {tag}
-                              </span>
+                              <span key={tag} className="text-xs px-2 py-0.5 rounded-full bg-[--accent]/10 text-[--accent] font-body">{tag}</span>
                             ))}
                           </div>
                         )}
                       </div>
-                      {!fbConnected && (
-                        <ArrowRight size={16} className="text-[--text-muted] group-hover:text-[--accent] transition-colors shrink-0 mt-1" />
-                      )}
+                      {!fbConnected && <ArrowRight size={16} className="text-[--text-muted] group-hover:text-[--accent] transition-colors shrink-0 mt-1" />}
                     </div>
                   </button>
 
@@ -268,29 +238,18 @@ export default function NewAnalysis() {
 
                   <button
                     onClick={() => { setAnalysisType('general'); setStep(2) }}
-                    className={cn(
-                      'w-full p-5 rounded-xl border text-left transition-all duration-200 group',
-                      analysisType === 'general' && !fbConnected
-                        ? 'border-[--border-accent] bg-[--bg-tertiary]'
-                        : 'border-[--border] hover:border-[--border-accent] hover:bg-[--bg-tertiary]'
-                    )}
+                    className={cn('w-full p-5 rounded-xl border text-left transition-all duration-200 group', analysisType === 'general' && !fbConnected ? 'border-[--border-accent] bg-[--bg-tertiary]' : 'border-[--border] hover:border-[--border-accent] hover:bg-[--bg-tertiary]')}
                   >
                     <div className="flex items-start gap-4">
                       <div className="w-10 h-10 rounded-lg bg-[--bg-tertiary] border border-[--border] flex items-center justify-center shrink-0">
                         <Search size={16} className="text-[--text-muted]" />
                       </div>
                       <div className="flex-1 min-w-0">
-                        <p className="font-semibold text-[--text-primary] font-body text-sm">
-                          Skip â€” Get General Report
-                        </p>
-                        <p className="text-xs text-[--text-secondary] font-body mt-1">
-                          AI-powered analysis using publicly available information. No login required.
-                        </p>
+                        <p className="font-semibold text-[--text-primary] font-body text-sm">Skip — Get General Report</p>
+                        <p className="text-xs text-[--text-secondary] font-body mt-1">AI-powered analysis using publicly available information. No login required.</p>
                         <div className="flex flex-wrap gap-2 mt-3">
                           {['Brand positioning', 'Competitor landscape', 'Market trends', 'SWOT analysis'].map(tag => (
-                            <span key={tag} className="text-xs px-2 py-0.5 rounded-full bg-[--bg-tertiary] border border-[--border] text-[--text-muted] font-body">
-                              {tag}
-                            </span>
+                            <span key={tag} className="text-xs px-2 py-0.5 rounded-full bg-[--bg-tertiary] border border-[--border] text-[--text-muted] font-body">{tag}</span>
                           ))}
                         </div>
                       </div>
@@ -304,7 +263,6 @@ export default function NewAnalysis() {
                       <Button onClick={() => setStep(2)} variant="primary">Continue <ArrowRight size={16} /></Button>
                     </div>
                   )}
-
                   {!fbConnected && (
                     <div className="flex justify-start">
                       <Button onClick={handleBack} variant="ghost"><ArrowLeft size={16} /> Back</Button>
@@ -326,26 +284,21 @@ export default function NewAnalysis() {
                     </div>
                     <div className="flex items-center justify-between text-sm">
                       <span className="text-[--text-muted] font-body">Report Type</span>
-                      <span className={cn(
-                        'font-body font-medium text-xs px-2 py-0.5 rounded-full',
-                        analysisType === 'comprehensive'
-                          ? 'bg-[--accent]/10 text-[--accent]'
-                          : 'bg-[--bg-tertiary] text-[--text-secondary]'
-                      )}>
+                      <span className={cn('font-body font-medium text-xs px-2 py-0.5 rounded-full', analysisType === 'comprehensive' ? 'bg-[--accent]/10 text-[--accent]' : 'bg-[--bg-tertiary] text-[--text-secondary]')}>
                         {analysisType === 'comprehensive' ? '\u26A1 Comprehensive (FB Connected)' : 'General (AI-Powered)'}
                       </span>
                     </div>
                     <div className="pt-3 text-xs text-[--text-muted] font-body space-y-1">
-                      <p>{'\u2713'} Brand positioning & SWOT analysis</p>
-                      <p>{'\u2713'} Competitor landscape mapping</p>
-                      <p>{'\u2713'} Market trends & opportunities</p>
-                      <p>{'\u2713'} AI-powered recommendations</p>
+                      <p>\u2713 Brand positioning & SWOT analysis</p>
+                      <p>\u2713 Competitor landscape mapping</p>
+                      <p>\u2713 Market trends & opportunities</p>
+                      <p>\u2713 AI-powered recommendations</p>
                       {analysisType === 'comprehensive' && (
                         <>
-                          <p className="text-[--accent]">{'\u2713'} Real follower & engagement metrics</p>
-                          <p className="text-[--accent]">{'\u2713'} Actual audience demographics</p>
-                          <p className="text-[--accent]">{'\u2713'} Post performance breakdown</p>
-                          <p className="text-[--accent]">{'\u2713'} Page insights data</p>
+                          <p className="text-[--accent]">\u2713 Real follower & engagement metrics</p>
+                          <p className="text-[--accent]">\u2713 Actual audience demographics</p>
+                          <p className="text-[--accent]">\u2713 Post performance breakdown</p>
+                          <p className="text-[--accent]">\u2713 Page insights data</p>
                         </>
                       )}
                     </div>

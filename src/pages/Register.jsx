@@ -44,8 +44,20 @@ export default function Register() {
       await register(form.name, form.email, form.password)
       navigate('/dashboard')
     } catch (err) {
-      const msg = err.response?.data?.error || err.message
-      setError(msg === 'Network Error' ? 'Cannot reach server — make sure the backend is running on port 3001' : msg)
+      const msg = err.response?.data?.error || err.message || ''
+      if (
+        msg.toLowerCase().includes('already registered') ||
+        msg.toLowerCase().includes('already been registered') ||
+        msg.toLowerCase().includes('duplicate') ||
+        msg.toLowerCase().includes('unique constraint') ||
+        msg.toLowerCase().includes('user already')
+      ) {
+        setError('This email is already registered. Try signing in instead.')
+      } else if (msg === 'Network Error') {
+        setError('Cannot reach server — make sure the backend is running.')
+      } else {
+        setError(msg || 'Something went wrong. Please try again.')
+      }
     } finally {
       setSubmitting(false)
     }

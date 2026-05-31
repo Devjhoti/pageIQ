@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router-dom'
 import { Search, Check, ArrowRight, ArrowLeft, CheckCircle } from 'lucide-react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { cn } from '../lib/utils'
-import { startAnalysis } from '../lib/services/analysisService'
+import { startAnalysis, getAnalysisStatus } from '../lib/services/analysisService'
 import api from '../lib/api'
 import PageWrapper from '../components/layout/PageWrapper'
 import Button from '../components/ui/Button'
@@ -25,7 +25,7 @@ export default function NewAnalysis() {
   const [analyzing, setAnalyzing] = useState(false)
   const [currentStage, setCurrentStage] = useState(0)
   const [stageProgress, setStageProgress] = useState(0)
-  const [analysisId, setAnalysisId] = useState(null)
+  const [finalizing, setFinalizing] = useState(false)
   const navigate = useNavigate()
 
   const brandName = fbUrl.match(/(?:facebook\.com\/)([^\/\s?]+)/)?.[1]
@@ -109,7 +109,6 @@ export default function NewAnalysis() {
         fbAccessToken || null
       )
       const id = analysis.id
-      setAnalysisId(id)
 
       for (let i = 0; i < loadingStages.length; i++) {
         setCurrentStage(i)
@@ -127,9 +126,28 @@ export default function NewAnalysis() {
         })
       }
 
-      if (id) {
-        navigate('/dashboard/reports')
-      }
+      setFinalizing(true)
+
+      const poll = setInterval(async () => {
+        try {
+          const status = await getAnalysisStatus(id)
+
+          if (status.status === 'completed' && status.report_id) {
+            clearInterval(poll)
+            navigate(`/dashboard/reports/${status.report_id}`)
+          }
+
+          if (status.status === 'failed') {
+            clearInterval(poll)
+            toast.error(status.error_message || 'Analysis failed. Please try again.')
+            setAnalyzing(false)
+            setFinalizing(false)
+          }
+        } catch (err) {
+          clearInterval(poll)
+          navigate('/dashboard/reports')
+        }
+      }, 2000)
     } catch (err) {
       console.error('Analysis failed:', err)
       setAnalyzing(false)
@@ -358,6 +376,16 @@ export default function NewAnalysis() {
                 </div>
               ))}
             </div>
+            {finalizing && (
+              <motion.p
+                initial={{ opacity: 0 }}
+                animate={{ opacity: [0.4, 1, 0.4] }}
+                transition={{ duration: 1.5, repeat: Infinity }}
+                className="text-sm text-[--text-muted] font-body text-center mt-6"
+              >
+                Finalizing your report...
+              </motion.p>
+            )}
           </div>
         )}
       </div>

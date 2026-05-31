@@ -16,7 +16,7 @@ export default function Dashboard() {
   const [recentReports, setRecentReports] = useState([])
 
   useEffect(() => {
-    getDashboardStats().then(setStats).catch(() => {})
+    getDashboardStats().then(d => setStats(d.stats)).catch(() => {})
     listReports().then(setRecentReports).catch(() => {})
   }, [])
 
@@ -60,3 +60,4 @@ export default function Dashboard() {
     </PageWrapper>
   )
 }
+

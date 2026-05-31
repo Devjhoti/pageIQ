@@ -130,7 +130,7 @@ export default function NewAnalysis() {
       })
     }
 
-    // Animation done � now wait for API if not finished yet
+    // Animation done — now wait for API if not finished yet
     setFinalizing(true)
 
     try {
@@ -213,7 +213,7 @@ export default function NewAnalysis() {
                       </div>
                       <div className="flex-1 min-w-0">
                         <p className="font-semibold text-[--text-primary] font-body text-sm">
-                          {fbConnected ? 'Facebook Connected \u2713' : connectingFb ? 'Connecting...' : 'Connect with Facebook'}
+                          {fbConnected ? 'Facebook Connected ✓' : connectingFb ? 'Connecting...' : 'Connect with Facebook'}
                         </p>
                         <p className="text-xs text-[--text-secondary] font-body mt-1">
                           {fbConnected ? 'Your page metrics, audience data and insights will be included.' : 'Get real follower counts, engagement rates, audience demographics, and post performance data.'}
@@ -245,7 +245,7 @@ export default function NewAnalysis() {
                         <Search size={16} className="text-[--text-muted]" />
                       </div>
                       <div className="flex-1 min-w-0">
-                        <p className="font-semibold text-[--text-primary] font-body text-sm">Skip � Get General Report</p>
+                        <p className="font-semibold text-[--text-primary] font-body text-sm">Skip — Get General Report</p>
                         <p className="text-xs text-[--text-secondary] font-body mt-1">AI-powered analysis using publicly available information. No login required.</p>
                         <div className="flex flex-wrap gap-2 mt-3">
                           {['Brand positioning', 'Competitor landscape', 'Market trends', 'SWOT analysis'].map(tag => (
@@ -285,20 +285,20 @@ export default function NewAnalysis() {
                     <div className="flex items-center justify-between text-sm">
                       <span className="text-[--text-muted] font-body">Report Type</span>
                       <span className={cn('font-body font-medium text-xs px-2 py-0.5 rounded-full', analysisType === 'comprehensive' ? 'bg-[--accent]/10 text-[--accent]' : 'bg-[--bg-tertiary] text-[--text-secondary]')}>
-                        {analysisType === 'comprehensive' ? '\u26A1 Comprehensive (FB Connected)' : 'General (AI-Powered)'}
+                        {analysisType === 'comprehensive' ? '⚡ Comprehensive (FB Connected)' : 'General (AI-Powered)'}
                       </span>
                     </div>
                     <div className="pt-3 text-xs text-[--text-muted] font-body space-y-1">
-                      <p>\u2713 Brand positioning & SWOT analysis</p>
-                      <p>\u2713 Competitor landscape mapping</p>
-                      <p>\u2713 Market trends & opportunities</p>
-                      <p>\u2713 AI-powered recommendations</p>
+                      <p>✓ Brand positioning & SWOT analysis</p>
+                      <p>✓ Competitor landscape mapping</p>
+                      <p>✓ Market trends & opportunities</p>
+                      <p>✓ AI-powered recommendations</p>
                       {analysisType === 'comprehensive' && (
                         <>
-                          <p className="text-[--accent]">\u2713 Real follower & engagement metrics</p>
-                          <p className="text-[--accent]">\u2713 Actual audience demographics</p>
-                          <p className="text-[--accent]">\u2713 Post performance breakdown</p>
-                          <p className="text-[--accent]">\u2713 Page insights data</p>
+                          <p className="text-[--accent]">✓ Real follower & engagement metrics</p>
+                          <p className="text-[--accent]">✓ Actual audience demographics</p>
+                          <p className="text-[--accent]">✓ Post performance breakdown</p>
+                          <p className="text-[--accent]">✓ Page insights data</p>
                         </>
                       )}
                     </div>

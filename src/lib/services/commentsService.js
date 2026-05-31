@@ -1,4 +1,5 @@
 import api from '../api'
+
 export const listComments = async (filters = {}) => {
   const params = new URLSearchParams()
   if (filters.sentiment) params.set('sentiment', filters.sentiment)
@@ -8,14 +9,17 @@ export const listComments = async (filters = {}) => {
   const { data } = await api.get(`/api/comments${qs ? `?${qs}` : ''}`)
   return data.comments
 }
+
 export const getCommentStats = async () => {
   const { data } = await api.get('/api/comments/stats')
   return data.stats
 }
+
 export const replyToComment = async (id, replyText) => {
   const { data } = await api.put(`/api/comments/${id}/reply`, { replyText })
   return data.comment
 }
+
 export const deleteComment = async (id) => {
   const { data } = await api.delete(`/api/comments/${id}`)
   return data

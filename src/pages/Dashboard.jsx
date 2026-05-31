@@ -21,11 +21,18 @@ export default function Dashboard() {
   }, [])
 
   const statCards = [
-    { icon: FileText, label: 'Total Reports', value: stats?.totalReports ?? 0, color: 'accent', trend: 12 },
-    { icon: BarChart3, label: 'Pages Analyzed', value: stats?.pagesAnalyzed ?? 0, color: 'blue', trend: 8 },
-    { icon: Target, label: 'Avg Brand Score', value: stats?.avgBrandScore ?? 0, color: 'accent', trend: 5 },
+    { icon: FileText, label: 'Total Reports', value: stats?.totalReports ?? 0, color: 'accent', trend: null },
+    { icon: BarChart3, label: 'Pages Analyzed', value: stats?.totalReports ?? 0, color: 'blue', trend: null },
+    { icon: Target, label: 'Avg Brand Score', value: stats?.avgScore ?? 0, color: 'accent', trend: null },
     { icon: TrendingUp, label: 'Reports This Month', value: stats?.reportsThisMonth ?? 0, color: 'blue', trend: null },
   ]
+
+  const activityItems = recentReports.map(r => ({
+    id: r.id,
+    label: `Report generated: ${r.brand_name}`,
+    date: r.created_at,
+    type: 'report'
+  }))
 
   return (
     <PageWrapper>
@@ -46,7 +53,7 @@ export default function Dashboard() {
           </div>
           <div className="space-y-6">
             <QuickAnalyze />
-            <ActivityFeed />
+            <ActivityFeed items={activityItems} />
           </div>
         </div>
       </div>

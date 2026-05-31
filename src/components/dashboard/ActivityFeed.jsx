@@ -16,8 +16,15 @@ const actionColor = {
   'New analysis started': 'text-[--warning]',
 }
 
-export default function ActivityFeed() {
-  const activities = mockActivityFeed()
+export default function ActivityFeed({ items = [] }) {
+  const activities = items.length > 0
+    ? items.map(item => ({
+        id: item.id,
+        action: 'Report generated',
+        target: item.label ? item.label.replace('Report generated: ', '') : 'Report',
+        timestamp: item.date,
+      }))
+    : mockActivityFeed()
 
   return (
     <div className="border border-[--border] bg-[--bg-secondary] rounded-xl p-5">
@@ -39,7 +46,7 @@ export default function ActivityFeed() {
                 </p>
               </div>
               <span className="text-xs text-[--text-muted] font-body whitespace-nowrap">
-                {formatTimeAgo(a.timestamp)}
+                {formatTimeAgo(a.timestamp || a.date)}
               </span>
             </div>
           )

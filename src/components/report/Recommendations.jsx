@@ -36,6 +36,11 @@ export default function Recommendations() {
                 <span className="text-[--accent] font-medium">Suggested action:</span>
                 <span>{rec.action}</span>
               </div>
+              {rec.estimatedImpact && (
+                <p className="text-xs text-[--accent] font-body mt-2">
+                  Expected impact: {rec.estimatedImpact}
+                </p>
+              )}
             </div>
           </div>
         </Card>

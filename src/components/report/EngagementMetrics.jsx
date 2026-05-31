@@ -1,10 +1,9 @@
 import { useReport } from '../../hooks/useReport'
-import { formatNumber } from '../../lib/utils'
 import { useCountUp } from '../../hooks/useCountUp'
 import Card from '../ui/Card'
 
-function AnimatedMetric({ label, value, suffix = '', icon: Icon }) {
-  const count = useCountUp(Number(value) || 0, 1500)
+function AnimatedMetric({ label, value, suffix = '', icon: Icon, isEstimated = false }) {
+  const count = useCountUp(typeof value === 'number' ? value : 0, 1500)
   return (
     <Card>
       <div className="flex items-center gap-2 mb-1">
@@ -14,6 +13,9 @@ function AnimatedMetric({ label, value, suffix = '', icon: Icon }) {
       <p className="text-2xl font-bold text-[--text-primary] font-display tabular-nums">
         {typeof value === 'number' ? count.toLocaleString() : value}{suffix}
       </p>
+      {isEstimated && (
+        <p className="text-xs text-[--text-muted] font-body mt-0.5">Estimated</p>
+      )}
     </Card>
   )
 }
@@ -21,25 +23,30 @@ function AnimatedMetric({ label, value, suffix = '', icon: Icon }) {
 export default function EngagementMetrics() {
   const { activeReport } = useReport()
   const data = activeReport || {}
-  const brand = data.brand || {}
+  const brand = data?.brand || {}
+  const reportType = data?.reportType || 'general'
 
-  const metrics = [
-    { label: 'Total Followers', value: brand.followers || 0 },
-    { label: 'Weekly Reach', value: brand.avgWeeklyReach || 0 },
-    { label: 'Engagement Rate', value: brand.engagementRate || 0, suffix: '%' },
-    { label: 'Total Posts (30d)', value: 47 },
-    { label: 'Avg Likes/Post', value: 1284 },
-    { label: 'Avg Comments/Post', value: 342 },
-    { label: 'Avg Shares/Post', value: 189 },
-    { label: 'Response Rate', value: 92, suffix: '%' },
-  ]
+  const rawFollowers = brand?.actualFollowers ?? brand?.estimatedFollowers ?? null
+  const rawEngagement = brand?.actualEngagementRate ?? brand?.estimatedEngagement ?? null
+
+  const displayFollowers = rawFollowers === null
+    ? '—'
+    : typeof rawFollowers === 'number'
+      ? rawFollowers
+      : rawFollowers
+
+  const displayEngagement = rawEngagement || '—'
 
   return (
     <section>
+      {reportType === 'general' && (
+        <p className="text-xs text-[--text-muted] font-body mb-4 italic">
+          Metrics below are estimated based on industry benchmarks. Connect Facebook for real data.
+        </p>
+      )}
       <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-        {metrics.map((m) => (
-          <AnimatedMetric key={m.label} {...m} />
-        ))}
+        <AnimatedMetric label="Followers" value={displayFollowers} isEstimated={reportType === 'general' && rawFollowers !== null} />
+        <AnimatedMetric label="Engagement Rate" value={displayEngagement} suffix="" isEstimated={reportType === 'general' && rawEngagement !== null} />
       </div>
     </section>
   )

@@ -1,28 +1,17 @@
-const { GoogleGenerativeAI } = require('@google/generative-ai');
+const Groq = require('groq-sdk');
 const env = require('../config/env');
 
-const genAI = new GoogleGenerativeAI(env.GEMINI_API_KEY);
-
-const model = genAI.getGenerativeModel({
-  model: 'gemini-2.0-flash',
-  generationConfig: { responseMimeType: 'application/json' },
-});
+const groq = new Groq({ apiKey: env.GROQ_API_KEY });
 
 async function generateGeneralReport(pageUrl, brandName) {
-  const prompt = `
-You are a senior brand intelligence analyst with deep knowledge of digital marketing,
-social media strategy, and the Bangladeshi market.
+  const prompt = `You are a senior brand intelligence analyst with deep knowledge of digital marketing, social media strategy, and the Bangladeshi market.
 
 Analyze the Facebook business page for: ${brandName}
 Page URL: ${pageUrl}
 
-Use your knowledge of this brand, its industry, the Bangladeshi market context,
-and general digital marketing best practices to generate a comprehensive brand
-intelligence report.
+Use your knowledge of this brand, its industry, the Bangladeshi market context, and general digital marketing best practices to generate a comprehensive brand intelligence report.
 
-Return ONLY a valid JSON object with EXACTLY this structure. No markdown. No explanation.
-All fields required. Be specific — reference the actual brand, real competitors in their
-space, and real market dynamics. Do not use placeholder text.
+Return ONLY a valid JSON object with EXACTLY this structure. No markdown. No explanation. All fields required. Be specific — reference the actual brand, real competitors in their space, and real market dynamics. Do not use placeholder text.
 
 {
   "reportType": "general",
@@ -65,21 +54,21 @@ space, and real market dynamics. Do not use placeholder text.
       "name": "<real competitor name>",
       "estimatedFollowers": "<range>",
       "positioning": "<one sentence>",
-      "threat": "High" | "Medium" | "Low",
+      "threat": "High",
       "keyDifferentiator": "<what makes them different>"
     }
   ],
   "market": {
     "industryKeywords": ["<kw1>", "<kw2>", "<kw3>", "<kw4>", "<kw5>"],
     "trendingTopics": [
-      { "topic": "<topic>", "direction": "up" | "down" | "stable", "relevance": "<why it matters>" }
+      { "topic": "<topic>", "direction": "up", "relevance": "<why it matters>" }
     ],
     "marketOpportunityScore": <integer 0-100>,
     "bangladeshContext": "<specific insight about this industry in Bangladesh>"
   },
   "recommendations": [
     {
-      "priority": "High" | "Medium" | "Low",
+      "priority": "High",
       "title": "<action title>",
       "rationale": "<2-3 sentence explanation>",
       "action": "<specific first step>",
@@ -90,16 +79,13 @@ space, and real market dynamics. Do not use placeholder text.
     "missingMetrics": ["Real follower count", "Actual engagement rate", "Audience demographics", "Post performance data", "Reach and impressions"],
     "message": "Connect your Facebook account to unlock your complete report with real metrics from your page."
   }
-}
-`;
+}`;
 
-  return await callGemini(prompt);
+  return await callGroq(prompt);
 }
 
 async function generateComprehensiveReport(pageUrl, brandName, fbPageData, fbPosts, fbInsights) {
-  const prompt = `
-You are a senior brand intelligence analyst. Analyze the following real Facebook page data
-and generate a comprehensive brand intelligence report.
+  const prompt = `You are a senior brand intelligence analyst. Analyze the following real Facebook page data and generate a comprehensive brand intelligence report.
 
 Brand: ${brandName}
 Page URL: ${pageUrl}
@@ -113,8 +99,7 @@ ${JSON.stringify(fbPosts, null, 2)}
 PAGE INSIGHTS:
 ${JSON.stringify(fbInsights, null, 2)}
 
-Return ONLY a valid JSON object with EXACTLY this structure. No markdown. No explanation.
-Every field must reflect the actual data provided — no placeholder text.
+Return ONLY a valid JSON object with EXACTLY this structure. No markdown. No explanation. Every field must reflect the actual data provided.
 
 {
   "reportType": "comprehensive",
@@ -166,41 +151,66 @@ Every field must reflect the actual data provided — no placeholder text.
       "name": "<competitor>",
       "estimatedFollowers": "<range>",
       "positioning": "<one sentence>",
-      "threat": "High" | "Medium" | "Low",
+      "threat": "High",
       "keyDifferentiator": "<differentiator>"
     }
   ],
   "market": {
     "industryKeywords": ["<kw1>", "<kw2>", "<kw3>", "<kw4>", "<kw5>"],
     "trendingTopics": [
-      { "topic": "<topic>", "direction": "up" | "down" | "stable", "relevance": "<why>" }
+      { "topic": "<topic>", "direction": "up", "relevance": "<why>" }
     ],
     "marketOpportunityScore": <integer 0-100>,
     "bangladeshContext": "<specific market insight>"
   },
   "recommendations": [
     {
-      "priority": "High" | "Medium" | "Low",
+      "priority": "High",
       "title": "<action title>",
       "rationale": "<grounded in actual data>",
       "action": "<specific first step>",
       "estimatedImpact": "<expected improvement>"
     }
   ]
-}
-`;
+}`;
 
-  return await callGemini(prompt);
+  return await callGroq(prompt);
 }
 
-async function callGemini(prompt) {
-  const result = await model.generateContent(prompt);
-  const text = result.response.text();
-  try {
-    return JSON.parse(text);
-  } catch {
-    const clean = text.replace(/```json|```/g, '').trim();
-    return JSON.parse(clean);
+async function callGroq(prompt, retries = 3, delayMs = 5000) {
+  for (let attempt = 1; attempt <= retries; attempt++) {
+    try {
+      const completion = await groq.chat.completions.create({
+        model: 'llama-3.3-70b-versatile',
+        messages: [{ role: 'user', content: prompt }],
+        temperature: 0.7,
+        max_tokens: 4096,
+        response_format: { type: 'json_object' },
+      });
+
+      const text = completion.choices[0]?.message?.content || '';
+
+      try {
+        return JSON.parse(text);
+      } catch {
+        const clean = text.replace(/```json|```/g, '').trim();
+        return JSON.parse(clean);
+      }
+
+    } catch (err) {
+      const isRateLimit =
+        err.message?.includes('rate') ||
+        err.message?.includes('429') ||
+        err.status === 429;
+
+      if (isRateLimit && attempt < retries) {
+        console.log(`Groq rate limit hit. Retrying in ${delayMs / 1000}s... (attempt ${attempt}/${retries})`);
+        await new Promise((resolve) => setTimeout(resolve, delayMs));
+        continue;
+      }
+
+      throw err;
+    }
   }
 }
 

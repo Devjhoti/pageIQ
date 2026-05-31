@@ -13,9 +13,10 @@ const env = {
   FB_APP_ID: process.env.FB_APP_ID || '',
   FB_APP_SECRET: process.env.FB_APP_SECRET || '',
   FB_REDIRECT_URI: process.env.FB_REDIRECT_URI || 'http://localhost:3001/api/facebook/callback',
+  GROQ_API_KEY: process.env.GROQ_API_KEY || '',
 };
 
-const OPTIONAL_KEYS = ['GEMINI_API_KEY', 'FB_APP_ID', 'FB_APP_SECRET', 'FB_REDIRECT_URI'];
+const OPTIONAL_KEYS = ['GEMINI_API_KEY', 'FB_APP_ID', 'FB_APP_SECRET', 'FB_REDIRECT_URI', 'GROQ_API_KEY'];
 const missing = Object.entries(env).filter(([k, v]) => !v && v !== 0 && !OPTIONAL_KEYS.includes(k));
 if (missing.length > 0) {
   console.error(`Missing required env vars: ${missing.map(([k]) => k).join(', ')}`);

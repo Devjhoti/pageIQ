@@ -1,3 +1,4 @@
+import { cn } from '../../lib/utils'
 import { useReport } from '../../hooks/useReport'
 import { formatDate } from '../../lib/utils'
 import Button from '../ui/Button'
@@ -6,7 +7,11 @@ import { Download, Share2, RefreshCw } from 'lucide-react'
 export default function ReportHeader() {
   const { activeReport, reportMeta } = useReport()
   const data = activeReport || {}
-  const { brand, score, generatedAt } = data
+  const brandName = data?.brand?.name || reportMeta?.brand_name || '—'
+  const industry = data?.brand?.industry || data?.brand?.category || '—'
+  const score = reportMeta?.score || data?.brandScore || data?.score || 0
+  const reportType = data?.reportType || 'general'
+  const { generatedAt } = data
 
   const circumference = 2 * Math.PI * 36
   const offset = circumference - ((score || 0) / 100) * circumference
@@ -15,12 +20,22 @@ export default function ReportHeader() {
     <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-4 pb-6 border-b border-[--border]">
       <div className="flex items-center gap-4">
         <div className="w-14 h-14 rounded-xl bg-[--accent-glow] flex items-center justify-center text-2xl font-bold text-[--accent] font-display">
-          {(brand?.name || reportMeta?.brand_name || '?').charAt(0)}
+          {brandName.charAt(0)}
         </div>
         <div>
-          <h1 className="text-xl font-semibold text-[--text-primary] font-display">{brand?.name || reportMeta?.brand_name || 'Report'}</h1>
+          <div className="flex items-center gap-2">
+            <h1 className="text-xl font-semibold text-[--text-primary] font-display">{brandName}</h1>
+            <span className={cn(
+              'text-xs px-2 py-0.5 rounded-full font-body',
+              reportType === 'comprehensive'
+                ? 'bg-[--accent]/10 text-[--accent]'
+                : 'bg-[--bg-tertiary] border border-[--border] text-[--text-muted]'
+            )}>
+              {reportType === 'comprehensive' ? '⚡ Comprehensive' : '◎ General'}
+            </span>
+          </div>
           <div className="flex items-center gap-3 text-xs text-[--text-muted] font-body mt-1">
-            <span>{brand?.pageUrl || ''}</span>
+            <span>{industry}</span>
             {generatedAt && <><span>·</span><span>Generated {formatDate(generatedAt)}</span></>}
           </div>
         </div>

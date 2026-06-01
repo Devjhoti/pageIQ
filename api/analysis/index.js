@@ -3,6 +3,7 @@ import { supabase } from '../_lib/supabase.js'
 import { requireAuth } from '../_lib/auth.js'
 import { generateGeneralReport, generateComprehensiveReport } from '../_lib/groq.js'
 import { extractPageSlug, fetchPublicPageData, fetchPagePosts, fetchPageInsights } from '../_lib/facebook.js'
+import { fetchBrandContext } from '../_lib/serp.js'
 
 export default async function handler(req, res) {
   if (handleCors(req, res)) return
@@ -31,19 +32,30 @@ export default async function handler(req, res) {
       const insights = await fetchPageInsights(fbPageId, fbAccessToken)
       reportData = await generateComprehensiveReport(pageUrl, brandName, fbPageData, posts, insights)
     } else {
-      // Fetch real public page data using app token — no user login needed
+      // Run FB fetch and SerpAPI enrichment in parallel
       let realPageData = null
-      try {
-        const { extractPageSlug, fetchPublicPageData, getAppAccessToken } = await import('../_lib/facebook.js')
-        const pageSlug = extractPageSlug(pageUrl)
-        if (pageSlug) {
+      let brandContext = null
+
+      const [fbResult, serpResult] = await Promise.allSettled([
+        // Attempt FB public page fetch
+        (async () => {
+          const { extractPageSlug, fetchPublicPageData, getAppAccessToken } = await import('../_lib/facebook.js')
+          const pageSlug = extractPageSlug(pageUrl)
+          if (!pageSlug) return null
           const appToken = getAppAccessToken()
-          realPageData = await fetchPublicPageData(pageSlug, appToken)
-        }
-      } catch (err) {
-        console.log('Public page fetch failed (non-critical):', err.message)
-      }
-      reportData = await generateGeneralReport(pageUrl, brandName, realPageData)
+          return await fetchPublicPageData(pageSlug, appToken)
+        })(),
+        // SerpAPI web enrichment
+        fetchBrandContext(brandName, pageUrl),
+      ])
+
+      if (fbResult.status === 'fulfilled') realPageData = fbResult.value
+      else console.log('FB fetch failed (non-critical):', fbResult.reason?.message)
+
+      if (serpResult.status === 'fulfilled') brandContext = serpResult.value
+      else console.log('SerpAPI failed (non-critical):', serpResult.reason?.message)
+
+      reportData = await generateGeneralReport(pageUrl, brandName, realPageData, brandContext)
     }
 
     const slug = brandName.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, '')

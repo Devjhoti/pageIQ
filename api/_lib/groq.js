@@ -2,7 +2,7 @@ import Groq from 'groq-sdk'
 
 const groq = new Groq({ apiKey: process.env.GROQ_API_KEY })
 
-export async function generateGeneralReport(pageUrl, brandName, realPageData = null) {
+export async function generateGeneralReport(pageUrl, brandName, realPageData = null, brandContext = null) {
   const prompt = `You are a senior brand intelligence analyst with deep knowledge of digital marketing, social media strategy, and the Bangladeshi market.
 
 Analyze the Facebook business page for: ${brandName}
@@ -18,6 +18,19 @@ REAL FACEBOOK DATA (use these exact numbers — do not estimate):
 
 Use the real follower count above in your response. Do not estimate or use ranges if the real number is provided.
 ` : '(No real-time Facebook data available — use your training knowledge)'}
+${brandContext?.searchSummary ? `
+
+REAL-TIME WEB RESEARCH (incorporate this into your analysis):
+${brandContext.searchSummary}
+
+Use any specific facts, news, or context from above to make your analysis accurate and current.
+` : ''}
+
+${brandContext?.knowledgePanel ? `
+
+GOOGLE KNOWLEDGE PANEL DATA:
+${JSON.stringify(brandContext.knowledgePanel, null, 2)}
+` : ''}
 
 Return ONLY a valid JSON object with EXACTLY this structure. No markdown. No explanation.
 
@@ -74,7 +87,7 @@ Return ONLY a valid JSON object with EXACTLY this structure. No markdown. No exp
     "marketOpportunityScore": <integer 0-100>,
     "bangladeshContext": "<specific Bangladesh market insight>"
   },
-  "recentNews": [],
+  "recentNews": ${brandContext?.recentNews?.length ? JSON.stringify(brandContext.recentNews) : '[]'},
   "recommendations": [
     {
       "priority": "High",
